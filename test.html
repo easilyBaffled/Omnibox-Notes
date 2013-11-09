@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8' />
+<style>
+p {
+    font-family: Tahoma;
+}
+</style>
+</head>
+<body>
+<!--Add a button for the user to click to initiate auth sequence -->
+<button id="authorize-button" style="visibility: hidden">Authorize</button>
+<script type="text/javascript">
+var clientId = '######';
+var apiKey = '42564484407';
+// To enter one or more authentication scopes, refer to the documentation for the API.
+var scopes = 'https://www.googleapis.com/auth/drive';
+
+// Use a button to handle authentication the first time.
+function handleClientLoad() {
+    gapi.client.setApiKey(apiKey);
+    window.setTimeout(checkAuth,1);
+}
+
+function checkAuth() {
+    gapi.auth.authorize({client_id: clientId, scope: scopes, immediate: true}, handleAuthResult);
+}
+
+function handleAuthResult(authResult) {
+    var authorizeButton = document.getElementById('authorize-button');
+    if (authResult && !authResult.error) {
+        authorizeButton.style.visibility = 'hidden';
+        makeApiCall();
+    } else {
+        authorizeButton.style.visibility = '';
+        authorizeButton.onclick = handleAuthClick;
+    }
+}
+
+function handleAuthClick(event) {
+    gapi.auth.authorize({client_id: clientId, scope: scopes, immediate: false}, handleAuthResult);
+    return false;
+}
+
+// Load the API and make an API call.  Display the results on the screen.
+function makeApiCall() {
+    gapi.client.load('drive', 'v2', function() {
+                     
+                     var request = gapi.client.drive.files.list ( {'maxResults': 5 } );
+                     
+                     request.execute(function(resp) {
+                                     for (i=0; i<resp.items.length; i++) {
+                                     var titulo = resp.items[i].title;
+                                     var fechaUpd = resp.items[i].modifiedDate;
+                                     var userUpd = resp.items[i].lastModifyingUserName;
+                                     
+                                     var fileInfo = document.createElement('li');
+                                     fileInfo.appendChild(document.createTextNode('TITLE: ' + titulo + ' - LAST MODIF: ' + fechaUpd + ' - BY: ' + userUpd ));
+                                     document.getElementById('content').appendChild(fileInfo);
+                                     }
+                                     });
+                     });
+}
+</script>
+<script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
+<p><b>These are 5 files from your GDrive :)</b></p>
+<div id="content"></div>
+</body>
+</html>
